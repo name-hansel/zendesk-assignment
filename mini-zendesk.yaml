@@ -1,0 +1,65 @@
+openapi: 3.0.0
+info:
+  title: mini-zendesk
+  version: 1.0.0
+paths:
+  /api/tickets:
+    post:
+      summary: Create ticket
+      operationId: c_users_snehal_documents_bruno_minizendesk_create_ticket_yml
+      description: ''
+      responses:
+        '200':
+          description: ''
+      requestBody:
+        $ref: '#/components/requestBodies/create_ticket'
+      servers:
+        - url: http://localhost:8080
+  /api/tickets/customer/snehal-a8c351:
+    get:
+      summary: Get ticket by customer
+      operationId: c_users_snehal_documents_bruno_minizendesk_get_ticket_by_customer_yml
+      description: ''
+      responses:
+        '200':
+          description: ''
+      servers:
+        - url: http://localhost:8080
+servers: []
+components:
+  schemas:
+    create_ticket:
+      type: object
+      properties:
+        subject:
+          type: string
+        description:
+          type: string
+        customerId:
+          type: string
+        customer:
+          type: object
+          properties:
+            name:
+              type: string
+            email:
+              type: string
+            phoneNumber:
+              type: string
+      example:
+        subject: sub2
+        description: desc2
+        customerId: snehal-a8c351
+        customer:
+          name: Snehal
+          email: snehal@gmail.com
+          phoneNumber: '898913717623'
+  requestBodies:
+    create_ticket:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/create_ticket'
+      description: ''
+      required: true
+  securitySchemes: {}
