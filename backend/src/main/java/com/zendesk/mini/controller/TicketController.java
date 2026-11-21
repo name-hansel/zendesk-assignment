@@ -51,4 +51,9 @@ public class TicketController {
     public List<TicketResponse> getByCustomer(@PathVariable String customerId) {
         return ticketService.getTicketsByCustomer(customerId);
     }
+
+    @GetMapping("/agent/{agentId}")
+    public List<TicketResponse> getByAgent(@PathVariable String agentId) {
+        return ticketService.getTicketsByAgent(agentId);
+    }
 }

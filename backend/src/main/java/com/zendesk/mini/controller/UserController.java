@@ -2,6 +2,7 @@ package com.zendesk.mini.controller;
 
 import com.zendesk.mini.dto.user.UserRequest;
 import com.zendesk.mini.dto.user.UserResponse;
+import com.zendesk.mini.enums.UserRole;
 import com.zendesk.mini.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -22,8 +23,8 @@ public class UserController {
     }
 
     @GetMapping
-    public List<UserResponse> list() {
-        return userService.findAll();
+    public List<UserResponse> list(@RequestParam(required = false) UserRole role) {
+        return role == null ? userService.findAll() : userService.findByRole(role);
     }
 
     @GetMapping("/{id}")

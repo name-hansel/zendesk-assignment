@@ -7,9 +7,7 @@ import com.zendesk.mini.entity.TicketEntity;
 import com.zendesk.mini.entity.UserEntity;
 import com.zendesk.mini.enums.TicketStatus;
 import com.zendesk.mini.enums.UserRole;
-import com.zendesk.mini.exception.CustomerNotFoundException;
-import com.zendesk.mini.exception.ResourceNotFoundException;
-import com.zendesk.mini.exception.UserNotCustomerException;
+import com.zendesk.mini.exception.*;
 import com.zendesk.mini.repository.TicketRepository;
 import com.zendesk.mini.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -101,6 +99,20 @@ public class TicketService {
         }
 
         return ticketRepository.findByCustomer_IdOrderByCreatedAtDesc(customer.getId())
+                .stream()
+                .map(TicketResponse::from)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<TicketResponse> getTicketsByAgent(String agentUserId) {
+        UserEntity agent = userRepository.findByUserId(agentUserId)
+                .orElseThrow(() -> new UserNotFoundException(agentUserId));
+        if (agent.getRole() != UserRole.AGENT) {
+            throw new UserNotAgentException(agentUserId);
+        }
+
+        return ticketRepository.findByAgent_IdOrderByCreatedAtDesc(agent.getId())
                 .stream()
                 .map(TicketResponse::from)
                 .toList();

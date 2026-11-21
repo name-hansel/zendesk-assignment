@@ -11,5 +11,7 @@ public interface TicketRepository extends JpaRepository<TicketEntity, UUID> {
 
     List<TicketEntity> findByCustomer_IdOrderByCreatedAtDesc(UUID customerId);
 
+    List<TicketEntity> findByAgent_IdOrderByCreatedAtDesc(UUID agentId);
+
     List<TicketEntity> findByStatus(TicketStatus status);
 }
