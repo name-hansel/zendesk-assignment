@@ -1,13 +1,18 @@
 package com.zendesk.mini.service;
 
-import com.zendesk.mini.dto.TicketRequest;
-import com.zendesk.mini.dto.TicketResponse;
+import com.zendesk.mini.dto.ticket.CreateTicketRequest;
+import com.zendesk.mini.dto.ticket.TicketResponse;
+import com.zendesk.mini.dto.ticket.UpdateTicketRequest;
 import com.zendesk.mini.entity.TicketEntity;
 import com.zendesk.mini.entity.UserEntity;
 import com.zendesk.mini.enums.TicketStatus;
+import com.zendesk.mini.enums.UserRole;
+import com.zendesk.mini.exception.CustomerNotFoundException;
 import com.zendesk.mini.exception.ResourceNotFoundException;
+import com.zendesk.mini.exception.UserNotCustomerException;
 import com.zendesk.mini.repository.TicketRepository;
 import com.zendesk.mini.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,20 +21,16 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-@Transactional
+@RequiredArgsConstructor
 public class TicketService {
 
-    private final TicketRepository tickets;
-    private final UserRepository users;
-
-    public TicketService(TicketRepository tickets, UserRepository users) {
-        this.tickets = tickets;
-        this.users = users;
-    }
+    private final UserService userService;
+    private final UserRepository userRepository;
+    private final TicketRepository ticketRepository;
 
     @Transactional(readOnly = true)
     public List<TicketResponse> findAll(TicketStatus status) {
-        List<TicketEntity> entities = status == null ? tickets.findAll() : tickets.findByStatus(status);
+        List<TicketEntity> entities = status == null ? ticketRepository.findAll() : ticketRepository.findByStatus(status);
         return entities.stream().map(TicketResponse::from).toList();
     }
 
@@ -38,49 +39,73 @@ public class TicketService {
         return TicketResponse.from(load(id));
     }
 
-    public TicketResponse create(TicketRequest request) {
-        TicketEntity entity = new TicketEntity();
-        apply(entity, request);
-        return TicketResponse.from(tickets.save(entity));
+    @Transactional
+    public TicketResponse create(CreateTicketRequest req) {
+        boolean hasId = req.customerUuid() != null;
+
+        UserEntity customer = hasId ? findCustomer(req.customerUuid()) : userService.createCustomer(req.user());
+
+        Instant now = Instant.now();
+        TicketEntity ticket = new TicketEntity();
+        ticket.setId(UUID.randomUUID());
+        ticket.setSubject(req.subject().trim());
+        ticket.setDescription(req.description().trim());
+        ticket.setCustomer(customer);
+        ticket.setStatus(TicketStatus.OPEN);
+        ticket.setCreatedAt(now);
+        ticket.setUpdatedAt(now);
+        ticketRepository.save(ticket);
+
+//        StatusHistory history = new StatusHistory();
+//        history.setId(UUID.randomUUID());
+//        history.setTicketId(ticket.getId());
+//        history.setPrevStatus(null);
+//        history.setNewStatus("OPEN");
+//        history.setTimestamp(now);
+//        statusHistoryRepository.save(history);
+
+        return TicketResponse.from(ticket);
     }
 
-    public TicketResponse update(UUID id, TicketRequest request) {
-        TicketEntity entity = load(id);
-        apply(entity, request);
-        return TicketResponse.from(tickets.save(entity));
+    @Transactional
+    public TicketResponse update(UUID id, UpdateTicketRequest request) {
+        TicketEntity ticket = load(id);
+        ticket.setSubject(request.subject());
+        ticket.setDescription(request.description());
+        ticket.setAgent(request.agentId() == null ? null : loadUser(request.agentId()));
+        if (request.status() != null) {
+            ticket.setStatus(request.status());
+        }
+        if (ticket.getStatus() == TicketStatus.CLOSED) {
+            if (ticket.getClosedAt() == null) {
+                ticket.setClosedAt(Instant.now());
+            }
+        } else {
+            ticket.setClosedAt(null);
+        }
+        return TicketResponse.from(ticketRepository.saveAndFlush(ticket));
     }
 
+    @Transactional
     public void delete(UUID id) {
-        tickets.delete(load(id));
-        tickets.flush();
+        ticketRepository.delete(load(id));
+        ticketRepository.flush();
     }
 
     private TicketEntity load(UUID id) {
-        return tickets.findById(id).orElseThrow(() -> new ResourceNotFoundException("Ticket", id));
-    }
-
-    /**
-     * A null status keeps the current status on update (defaults to OPEN on create).
-     * A null agentId unassigns the agent. closed_at is set when the ticket is CLOSED and cleared otherwise.
-     */
-    private void apply(TicketEntity entity, TicketRequest request) {
-        entity.setSubject(request.subject());
-        entity.setDescription(request.description());
-        entity.setCustomer(loadUser(request.customerId()));
-        entity.setAgent(request.agentId() == null ? null : loadUser(request.agentId()));
-        if (request.status() != null) {
-            entity.setStatus(request.status());
-        }
-        if (entity.getStatus() == TicketStatus.CLOSED) {
-            if (entity.getClosedAt() == null) {
-                entity.setClosedAt(Instant.now());
-            }
-        } else {
-            entity.setClosedAt(null);
-        }
+        return ticketRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Ticket", id));
     }
 
     private UserEntity loadUser(UUID id) {
-        return users.findById(id).orElseThrow(() -> new ResourceNotFoundException("User", id));
+        return userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User", id));
+    }
+
+    private UserEntity findCustomer(UUID id) {
+        UserEntity user = userRepository.findById(id)
+                .orElseThrow(() -> new CustomerNotFoundException(id));
+        if (user.getRole() != UserRole.CUSTOMER) {
+            throw new UserNotCustomerException(id);
+        }
+        return user;
     }
 }

@@ -1,14 +1,17 @@
 package com.zendesk.mini.service;
 
-import com.zendesk.mini.dto.UserRequest;
-import com.zendesk.mini.dto.UserResponse;
+import com.zendesk.mini.dto.user.CreateUserRequest;
+import com.zendesk.mini.dto.user.UserRequest;
+import com.zendesk.mini.dto.user.UserResponse;
 import com.zendesk.mini.entity.UserEntity;
+import com.zendesk.mini.enums.UserRole;
 import com.zendesk.mini.exception.ConflictException;
 import com.zendesk.mini.exception.ResourceNotFoundException;
 import com.zendesk.mini.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -53,6 +56,20 @@ public class UserService {
     public void delete(UUID id) {
         users.delete(load(id));
         users.flush();
+    }
+
+    public UserEntity createCustomer(CreateUserRequest request) {
+        UUID id = UUID.randomUUID();
+        UserEntity user = new UserEntity();
+        user.setId(id);
+        user.setUserId("CUS-" + id.toString().replace("-", "").substring(0, 12));
+        user.setName(request.name().trim());
+        user.setEmail(request.email());
+        user.setPhoneNumber(request.phoneNumber());
+        user.setRole(UserRole.CUSTOMER);
+        user.setCreatedAt(Instant.now());
+
+        return users.save(user);
     }
 
     private UserEntity load(UUID id) {

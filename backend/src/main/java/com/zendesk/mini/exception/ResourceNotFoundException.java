@@ -1,8 +1,10 @@
 package com.zendesk.mini.exception;
 
-public class ResourceNotFoundException extends RuntimeException {
+import org.springframework.http.HttpStatus;
+
+public class ResourceNotFoundException extends ApiException {
 
     public ResourceNotFoundException(String resource, Object id) {
-        super(resource + " not found: " + id);
+        super(HttpStatus.NOT_FOUND, "RESOURCE_NOT_FOUND", resource + " not found: " + id);
     }
 }

@@ -1,4 +1,4 @@
-package com.zendesk.mini.dto;
+package com.zendesk.mini.dto.user;
 
 import com.zendesk.mini.enums.UserRole;
 import jakarta.validation.constraints.Email;
