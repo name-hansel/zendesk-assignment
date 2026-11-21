@@ -15,6 +15,23 @@ paths:
         $ref: '#/components/requestBodies/create_ticket'
       servers:
         - url: http://localhost:8080
+    get:
+      summary: Get all tickets
+      operationId: c_users_snehal_documents_bruno_minizendesk_get_all_tickets_yml
+      description: ''
+      responses:
+        '200':
+          description: ''
+      parameters:
+        - name: status
+          in: query
+          description: ''
+          required: true
+          schema:
+            type: string
+          example: OPEN
+      servers:
+        - url: http://localhost:8080
   /api/tickets/customer/snehal-a8c351:
     get:
       summary: Get ticket by customer
@@ -23,6 +40,34 @@ paths:
       responses:
         '200':
           description: ''
+      servers:
+        - url: http://localhost:8080
+  /api/tickets/agent/sneha-iyer-g7h8i9:
+    get:
+      summary: Get by agent
+      operationId: c_users_snehal_documents_bruno_minizendesk_get_by_agent_yml
+      description: ''
+      responses:
+        '200':
+          description: ''
+      servers:
+        - url: http://localhost:8080
+  /api/users:
+    get:
+      summary: Get users
+      operationId: c_users_snehal_documents_bruno_minizendesk_get_users_yml
+      description: ''
+      responses:
+        '200':
+          description: ''
+      parameters:
+        - name: role
+          in: query
+          description: ''
+          required: true
+          schema:
+            type: string
+          example: AGENT
       servers:
         - url: http://localhost:8080
 servers: []
