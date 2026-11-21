@@ -1,3 +1,12 @@
 spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/ticketing
+    username: postgres
+    password: nicodiangelo
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
   application:
     name: mini
