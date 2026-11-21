@@ -1,24 +1,7 @@
-import './App.css'
+import TicketList from './components/TicketList.jsx'
 
 function App() {
-  //const [count, setCount] = useState(0)
-
-  return (
-    <>
-      <section id="center">
-        
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+  return <TicketList />
 }
 
 export default App
