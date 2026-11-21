@@ -1,0 +1,168 @@
+/*
+ * Tailwind v4 entry: config lives here, with no tailwind.config.js or PostCSS plugin.
+ * Keep every @import in this top block. Never @import a remote URL.
+ */
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Design system — inspired by Zendesk's Garden design language:
+ * deep "kale" teal navigation, Garden blue for actions, cool greys for surfaces,
+ * and the classic ticket status palette (new / open / pending / on-hold / solved).
+ */
+
+@theme inline {
+  --font-sans:
+    system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+
+  /* App surfaces */
+  --color-nav: var(--nav);
+  --color-nav-foreground: var(--nav-foreground);
+  --color-nav-active: var(--nav-active);
+  --color-panel: var(--panel);
+  --color-selected: var(--selected);
+  --color-hover: var(--hover);
+  --color-note: var(--note);
+  --color-note-border: var(--note-border);
+  --color-success: var(--success);
+  --color-tag: var(--tag);
+  --color-tag-foreground: var(--tag-foreground);
+
+  /* Ticket status */
+  --color-status-new: var(--status-new);
+  --color-status-new-foreground: var(--status-new-foreground);
+  --color-status-open: var(--status-open);
+  --color-status-pending: var(--status-pending);
+  --color-status-hold: var(--status-hold);
+  --color-status-solved: var(--status-solved);
+  --color-status-foreground: var(--status-foreground);
+
+  /* Charts */
+  --color-chart-created: var(--chart-created);
+  --color-chart-solved: var(--chart-solved);
+
+  /* Priority */
+  --color-priority-urgent: var(--priority-urgent);
+  --color-priority-high: var(--priority-high);
+
+  /* Avatars */
+  --color-avatar-1: var(--avatar-1);
+  --color-avatar-2: var(--avatar-2);
+  --color-avatar-3: var(--avatar-3);
+  --color-avatar-4: var(--avatar-4);
+  --color-avatar-5: var(--avatar-5);
+  --color-avatar-foreground: var(--avatar-foreground);
+}
+
+:root {
+  --radius: 0.25rem;
+
+  --background: oklch(0.985 0.002 220);
+  --foreground: oklch(0.33 0.02 245);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.33 0.02 245);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.33 0.02 245);
+
+  --primary: oklch(0.535 0.13 250);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.955 0.004 240);
+  --secondary-foreground: oklch(0.33 0.02 245);
+  --muted: oklch(0.955 0.004 240);
+  --muted-foreground: oklch(0.55 0.02 245);
+  --accent: oklch(0.97 0.015 240);
+  --accent-foreground: oklch(0.45 0.12 250);
+  --destructive: oklch(0.56 0.18 20);
+  --destructive-foreground: oklch(1 0 0);
+
+  --border: oklch(0.9 0.006 230);
+  --input: oklch(0.86 0.008 230);
+  --ring: oklch(0.535 0.13 250 / 45%);
+
+  --nav: oklch(0.317 0.052 205);
+  --nav-foreground: oklch(0.88 0.03 200);
+  --nav-active: oklch(0.4 0.055 205);
+  --panel: oklch(0.975 0.002 220);
+  --selected: oklch(0.92 0.03 240);
+  --hover: oklch(0.97 0.012 240);
+  --note: oklch(0.975 0.03 85);
+  --note-border: oklch(0.85 0.1 80);
+  --success: oklch(0.52 0.12 160);
+  --tag: oklch(0.935 0.004 250);
+  --tag-foreground: oklch(0.38 0.02 245);
+
+  --status-new: oklch(0.82 0.14 75);
+  --status-new-foreground: oklch(0.3 0.04 60);
+  --status-open: oklch(0.56 0.18 20);
+  --status-pending: oklch(0.535 0.13 250);
+  --status-hold: oklch(0.33 0.02 245);
+  --status-solved: oklch(0.65 0.02 245);
+  --status-foreground: oklch(1 0 0);
+
+  --chart-created: oklch(0.62 0.16 125);
+  --chart-solved: oklch(0.317 0.052 205);
+
+  --priority-urgent: oklch(0.56 0.18 20);
+  --priority-high: oklch(0.65 0.16 50);
+
+  --avatar-1: oklch(0.55 0.1 205);
+  --avatar-2: oklch(0.58 0.13 30);
+  --avatar-3: oklch(0.55 0.12 160);
+  --avatar-4: oklch(0.52 0.13 260);
+  --avatar-5: oklch(0.6 0.13 70);
+  --avatar-foreground: oklch(1 0 0);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html,
+  body {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+  }
+}
+
+@utility field-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-foreground);
+  margin-bottom: 0.375rem;
+  display: block;
+}
