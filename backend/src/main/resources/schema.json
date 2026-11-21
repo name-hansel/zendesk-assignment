@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/schemas/ticketing.json",
+  "title": "Ticketing System",
+  "description": "JSON Schemas for users, tickets, comments and status history.",
+  "$defs": {
+    "uuid": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "TicketStatus": {
+      "type": "string",
+      "enum": ["OPEN", "PENDING", "SOLVED", "CLOSED"]
+    },
+    "User": {
+      "title": "User",
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/uuid" },
+        "user_id": { "type": "string", "minLength": 1, "maxLength": 32 },
+        "name": { "type": "string", "minLength": 1, "maxLength": 255 },
+        "email": { "type": "string", "format": "email", "maxLength": 255 },
+        "phone_number": { "type": ["string", "null"], "maxLength": 20 },
+        "role": { "type": "string", "enum": ["CUSTOMER", "AGENT"] },
+        "created_at": { "$ref": "#/$defs/timestamp" }
+      },
+      "required": ["id", "user_id", "name", "email", "role", "created_at"],
+      "additionalProperties": false
+    },
+    "Ticket": {
+      "title": "Ticket",
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/uuid" },
+        "subject": { "type": "string", "minLength": 1, "maxLength": 255 },
+        "description": { "type": "string", "minLength": 1 },
+        "customer_id": { "$ref": "#/$defs/uuid" },
+        "agent_id": {
+          "oneOf": [{ "$ref": "#/$defs/uuid" }, { "type": "null" }]
+        },
+        "status": { "$ref": "#/$defs/TicketStatus", "default": "OPEN" },
+        "created_at": { "$ref": "#/$defs/timestamp" },
+        "updated_at": { "$ref": "#/$defs/timestamp" },
+        "closed_at": {
+          "oneOf": [{ "$ref": "#/$defs/timestamp" }, { "type": "null" }]
+        }
+      },
+      "required": [
+        "id", "subject", "description", "customer_id",
+        "status", "created_at", "updated_at"
+      ],
+      "additionalProperties": false
+    },
+    "Comment": {
+      "title": "Comment",
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/uuid" },
+        "ticket_id": { "$ref": "#/$defs/uuid" },
+        "user_id": { "$ref": "#/$defs/uuid" },
+        "body": { "type": "string", "minLength": 1 }
+      },
+      "required": ["id", "ticket_id", "user_id", "body"],
+      "additionalProperties": false
+    },
+    "StatusHistory": {
+      "title": "StatusHistory",
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/uuid" },
+        "ticket_id": { "$ref": "#/$defs/uuid" },
+        "prev_status": {
+          "oneOf": [{ "$ref": "#/$defs/TicketStatus" }, { "type": "null" }]
+        },
+        "new_status": { "$ref": "#/$defs/TicketStatus" },
+        "timestamp": { "$ref": "#/$defs/timestamp" }
+      },
+      "required": ["id", "ticket_id", "new_status", "timestamp"],
+      "additionalProperties": false
+    }
+  }
+}
