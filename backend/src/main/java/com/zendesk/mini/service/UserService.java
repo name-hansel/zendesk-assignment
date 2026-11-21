@@ -8,6 +8,7 @@ import com.zendesk.mini.enums.UserRole;
 import com.zendesk.mini.exception.ConflictException;
 import com.zendesk.mini.exception.ResourceNotFoundException;
 import com.zendesk.mini.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -59,10 +60,8 @@ public class UserService {
     }
 
     public UserEntity createCustomer(CreateUserRequest request) {
-        UUID id = UUID.randomUUID();
         UserEntity user = new UserEntity();
-        user.setId(id);
-        user.setUserId("CUS-" + id.toString().replace("-", "").substring(0, 12));
+        user.setUserId(generateUserId(request.name()));
         user.setName(request.name().trim());
         user.setEmail(request.email());
         user.setPhoneNumber(request.phoneNumber());
@@ -82,5 +81,14 @@ public class UserService {
         entity.setEmail(request.email());
         entity.setPhoneNumber(request.phoneNumber());
         entity.setRole(request.role());
+    }
+
+    private String generateUserId(String name) {
+        String slug = name.trim().toLowerCase().replaceAll("[^a-z0-9]+", "-");
+        if (slug.length() > 25) {
+            slug = slug.substring(0, 25);
+        }
+        String suffix = UUID.randomUUID().toString().substring(0, 6);
+        return slug + "-" + suffix;   // e.g. "asha-sharma-4f2a9c"
     }
 }

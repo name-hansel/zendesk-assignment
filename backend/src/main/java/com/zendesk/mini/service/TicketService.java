@@ -43,11 +43,10 @@ public class TicketService {
     public TicketResponse create(CreateTicketRequest req) {
         boolean hasId = req.customerUuid() != null;
 
-        UserEntity customer = hasId ? findCustomer(req.customerUuid()) : userService.createCustomer(req.user());
+        UserEntity customer = hasId ? findCustomer(req.customerUuid()) : userService.createCustomer(req.customer());
 
         Instant now = Instant.now();
         TicketEntity ticket = new TicketEntity();
-        ticket.setId(UUID.randomUUID());
         ticket.setSubject(req.subject().trim());
         ticket.setDescription(req.description().trim());
         ticket.setCustomer(customer);
