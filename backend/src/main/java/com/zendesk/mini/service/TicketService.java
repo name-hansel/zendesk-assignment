@@ -30,7 +30,8 @@ public class TicketService {
 
     @Transactional(readOnly = true)
     public List<TicketResponse> findAll(TicketStatus status) {
-        List<TicketEntity> entities = status == null ? ticketRepository.findAll() : ticketRepository.findByStatus(status);
+        List<TicketEntity> entities = status == null ? ticketRepository.findAll() : ticketRepository.findByStatus(
+                status);
         return entities.stream().map(TicketResponse::from).toList();
     }
 
@@ -41,9 +42,9 @@ public class TicketService {
 
     @Transactional
     public TicketResponse create(CreateTicketRequest req) {
-        boolean hasId = req.customerUuid() != null;
+        boolean hasId = req.customerId() != null;
 
-        UserEntity customer = hasId ? findCustomer(req.customerUuid()) : userService.createCustomer(req.customer());
+        UserEntity customer = hasId ? findCustomer(req.customerId()) : userService.createCustomer(req.customer());
 
         Instant now = Instant.now();
         TicketEntity ticket = new TicketEntity();
@@ -91,6 +92,20 @@ public class TicketService {
         ticketRepository.flush();
     }
 
+    @Transactional(readOnly = true)
+    public List<TicketResponse> getTicketsByCustomer(String customerUserId) {
+        UserEntity customer = userRepository.findByUserId(customerUserId)
+                .orElseThrow(() -> new CustomerNotFoundException(customerUserId));
+        if (customer.getRole() != UserRole.CUSTOMER) {
+            throw new UserNotCustomerException(customerUserId);
+        }
+
+        return ticketRepository.findByCustomer_IdOrderByCreatedAtDesc(customer.getId())
+                .stream()
+                .map(TicketResponse::from)
+                .toList();
+    }
+
     private TicketEntity load(UUID id) {
         return ticketRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Ticket", id));
     }
@@ -99,11 +114,11 @@ public class TicketService {
         return userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User", id));
     }
 
-    private UserEntity findCustomer(UUID id) {
-        UserEntity user = userRepository.findById(id)
-                .orElseThrow(() -> new CustomerNotFoundException(id));
+    private UserEntity findCustomer(String customerId) {
+        UserEntity user = userRepository.findByUserId(customerId)
+                .orElseThrow(() -> new CustomerNotFoundException(customerId));
         if (user.getRole() != UserRole.CUSTOMER) {
-            throw new UserNotCustomerException(id);
+            throw new UserNotCustomerException(customerId);
         }
         return user;
     }

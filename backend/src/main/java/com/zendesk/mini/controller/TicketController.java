@@ -46,4 +46,9 @@ public class TicketController {
         ticketService.delete(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/customer/{customerId}")
+    public List<TicketResponse> getByCustomer(@PathVariable String customerId) {
+        return ticketService.getTicketsByCustomer(customerId);
+    }
 }

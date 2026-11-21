@@ -9,5 +9,7 @@ import java.util.UUID;
 
 public interface TicketRepository extends JpaRepository<TicketEntity, UUID> {
 
+    List<TicketEntity> findByCustomer_IdOrderByCreatedAtDesc(UUID customerId);
+
     List<TicketEntity> findByStatus(TicketStatus status);
 }
