@@ -8,6 +8,7 @@ export type Channel = "email" | "whatsapp" | "chat" | "web" | "phone";
 
 export interface Person {
   id: string;
+  userId?: string;
   name: string;
   email: string;
   role: "agent" | "end-user";

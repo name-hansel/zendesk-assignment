@@ -10,6 +10,7 @@ import {
 import {
   CURRENT_AGENT_ID,
   getPerson,
+  people,
   registerPerson,
   seedTickets,
   type NewTicketInput,
@@ -54,6 +55,7 @@ function subscribe(listener: () => void) {
 function toPerson(user: ApiUser): Person {
   return {
     id: user.id,
+    userId: user.userId,
     name: user.name,
     email: user.email,
     role: user.role === "AGENT" ? "agent" : "end-user",
@@ -189,13 +191,18 @@ export async function createTicket(input: NewTicketInput): Promise<Ticket> {
   const requester = getPerson(input.requesterId);
   if (!requester) throw new Error("The selected requester could not be found.");
 
-  const customerUuid =
-    requester.role === "end-user" && isApiTicketId(requester.id) ? requester.id : undefined;
+  const existingCustomer = people.find(
+    (person) =>
+      person.role === "end-user" &&
+      person.email.toLowerCase() === requester.email.toLowerCase() &&
+      person.userId,
+  );
+  const customerId = existingCustomer?.userId;
   const request = {
     subject: input.subject.trim(),
     description: input.description.trim(),
-    ...(customerUuid
-      ? { customerUuid }
+    ...(customerId
+      ? { customerId }
       : {
           customer: {
             name: requester.name,
@@ -216,8 +223,4 @@ export async function createTicket(input: NewTicketInput): Promise<Ticket> {
     usingFallback: false,
   });
   return ticket;
-}
-
-export function isApiTicketId(value: string): boolean {
-  return /^[\da-f]{8}-(?:[\da-f]{4}-){3}[\da-f]{12}$/i.test(value);
 }

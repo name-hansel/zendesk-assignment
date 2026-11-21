@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Mail, Paperclip, Phone, Smile, Tag as TagIcon, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 
@@ -7,10 +7,10 @@ import { StatusLetter, Tag } from "@/components/desk/StatusBadge";
 import { UserAvatar } from "@/components/desk/UserAvatar";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { listAgents, type ApiUser } from "@/lib/api/tickets";
 import { cn } from "@/lib/utils";
 import { createTicket, useTicketStore } from "@/lib/ticket-store";
 import {
-  agents,
   channelLabel,
   CURRENT_AGENT_ID,
   formatDate,
@@ -46,7 +46,11 @@ export function NewTicketForm() {
   } = useTicketStore();
 
   const requesterId = CURRENT_AGENT_ID; // demo "logged-in" user
-  const [assigneeId, setAssigneeId] = useState<string>(CURRENT_AGENT_ID);
+  const [assigneeId, setAssigneeId] = useState<string>("none");
+  const [agents, setAgents] = useState<ApiUser[]>([]);
+  const [isLoadingAgents, setIsLoadingAgents] = useState(true);
+  const [agentLoadError, setAgentLoadError] = useState<string | null>(null);
+  const [agentLoadAttempt, setAgentLoadAttempt] = useState(0);
   const [group, setGroup] = useState<string>("Support");
   const [type, setType] = useState<TicketType>("question");
   const [priority, setPriority] = useState<TicketPriority>("normal");
@@ -58,6 +62,26 @@ export function NewTicketForm() {
   const [errors, setErrors] = useState<NewTicketErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    listAgents()
+      .then((users) => {
+        if (active) setAgents(users);
+      })
+      .catch((error: unknown) => {
+        if (active) {
+          setAgentLoadError(error instanceof Error ? error.message : "Unable to load agents.");
+        }
+      })
+      .finally(() => {
+        if (active) setIsLoadingAgents(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [agentLoadAttempt]);
 
   const clearError = (key: keyof NewTicketErrors) =>
     setErrors((prev) => {
@@ -129,13 +153,30 @@ export function NewTicketForm() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">Unassigned</SelectItem>
-                {agents.map((a) => (
-                  <SelectItem key={a.id} value={a.id}>
-                    {group}/{a.name}
+                {agents.map((agent) => (
+                  <SelectItem key={agent.id} value={agent.id}>
+                    {group}/{agent.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {isLoadingAgents && <p className="mt-1 text-xs text-muted-foreground">Loading agents…</p>}
+            {agentLoadError && (
+              <p role="alert" className="mt-1 text-xs text-destructive">
+                Could not load agents: {agentLoadError}{" "}
+                <button
+                  type="button"
+                  className="font-medium underline"
+                  onClick={() => {
+                    setIsLoadingAgents(true);
+                    setAgentLoadError(null);
+                    setAgentLoadAttempt((attempt) => attempt + 1);
+                  }}
+                >
+                  Retry
+                </button>
+              </p>
+            )}
           </Field>
         </div>
 

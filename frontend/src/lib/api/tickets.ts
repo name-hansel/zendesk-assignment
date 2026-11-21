@@ -22,7 +22,7 @@ export type ApiTicket = {
 export type CreateApiTicketRequest = {
   subject: string;
   description: string;
-  customerUuid?: string;
+  customerId?: string;
   customer?: {
     name: string;
     email: string;
@@ -80,6 +80,14 @@ export async function listTickets(): Promise<ApiTicket[]> {
     throw new TicketApiError("The tickets endpoint returned an invalid response.");
   }
   return tickets;
+}
+
+export async function listAgents(): Promise<ApiUser[]> {
+  const users = await request<ApiUser[]>("/api/users?role=AGENT");
+  if (!Array.isArray(users)) {
+    throw new TicketApiError("The users endpoint returned an invalid response.");
+  }
+  return users.filter((user) => user.role === "AGENT");
 }
 
 export function getTicket(id: string): Promise<ApiTicket> {
