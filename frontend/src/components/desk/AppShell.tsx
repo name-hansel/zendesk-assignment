@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import { BarChart3, Bell, Inbox, Search, Settings, Users } from "lucide-react";
+import { BarChart3, Bell, Inbox, Plus, Search, Settings, Users } from "lucide-react";
 import { UserAvatar } from "./UserAvatar";
 import { CURRENT_AGENT_ID, getPerson } from "@/lib/tickets";
 
@@ -60,6 +60,14 @@ export function AppShell({ title, children }: { title: ReactNode; children: Reac
               className="h-8 w-full rounded-md border border-input bg-background pl-8 pr-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-ring"
             />
           </label>
+          <Link
+            to="/tickets/new"
+            className="inline-flex h-8 items-center gap-1 rounded-md border border-primary px-2.5 text-sm font-semibold text-primary transition-colors hover:bg-accent"
+            aria-label="Add ticket"
+          >
+            <Plus className="size-4" />
+            <span className="hidden sm:inline">Add</span>
+          </Link>
           <button
             type="button"
             className="relative cursor-pointer text-muted-foreground hover:text-foreground"

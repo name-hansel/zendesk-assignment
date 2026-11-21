@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Filter, RefreshCw, Search } from "lucide-react";
+import { Filter, Plus, RefreshCw, Search } from "lucide-react";
 
 import { AppShell } from "@/components/desk/AppShell";
 import { PriorityText, StatusLetter } from "@/components/desk/StatusBadge";
@@ -8,7 +8,7 @@ import { UserAvatar } from "@/components/desk/UserAvatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
-import { updateTicket, useTickets } from "@/lib/ticket-store";
+import { updateTicket, useTicketStore } from "@/lib/ticket-store";
 import {
   formatDate,
   getPerson,
@@ -38,11 +38,11 @@ export const Route = createFileRoute("/")({
 });
 
 function TicketListPage() {
-  const { view = "your-unsolved" } = Route.useSearch();
+  const { view = "all-unsolved" } = Route.useSearch();
   const navigate = useNavigate();
-  const tickets = useTickets();
+  const { tickets, status, error, usingFallback, reloadTickets } = useTicketStore();
   const [query, setQuery] = useState("");
-  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [selected, setSelected] = useState<Set<number | string>>(new Set());
 
   const counts = useMemo(
     () => Object.fromEntries(ticketViews.map((v) => [v.id, ticketsForView(tickets, v.id).length])),
@@ -55,7 +55,7 @@ function TicketListPage() {
   const activeView = ticketViews.find((v) => v.id === view) ?? ticketViews[0];
 
   const allSelected = rows.length > 0 && rows.every((r) => selected.has(r.id));
-  const toggle = (id: number) =>
+  const toggle = (id: number | string) =>
     setSelected((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
@@ -119,8 +119,26 @@ function TicketListPage() {
               <Button variant="basic" size="sm" className="h-9">
                 <Filter /> Filter
               </Button>
+              <Button asChild size="sm" className="h-9">
+                <Link to="/tickets/new">
+                  <Plus /> New ticket
+                </Link>
+              </Button>
             </div>
           </div>
+
+          {status === "error" && (
+            <div role="alert" className="flex items-center justify-between gap-3 border-b bg-destructive/10 px-6 py-3 text-sm">
+              <span>
+                {usingFallback
+                  ? `Could not connect to the ticket service. Showing sample tickets. ${error}`
+                  : `Could not refresh tickets. Showing the last available data. ${error}`}
+              </span>
+              <Button variant="basic" size="sm" onClick={() => void reloadTickets()}>
+                Retry
+              </Button>
+            </div>
+          )}
 
           {selected.size > 0 && (
             <div className="flex items-center gap-3 border-b bg-accent px-6 py-2 text-sm">
@@ -222,7 +240,11 @@ function TicketListPage() {
                 {rows.length === 0 && (
                   <tr>
                     <td colSpan={7} className="py-16 text-center text-muted-foreground">
-                      No tickets in this view. Nice work!
+                      {status === "idle" || status === "loading"
+                        ? "Loading tickets…"
+                        : status === "error"
+                          ? "Tickets are unavailable."
+                          : "No tickets in this view. Nice work!"}
                     </td>
                   </tr>
                 )}

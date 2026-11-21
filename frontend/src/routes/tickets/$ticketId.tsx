@@ -35,7 +35,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { addComment, updateTicket, useTickets } from "@/lib/ticket-store";
+import {
+  addComment,
+  loadTicket,
+  updateTicket,
+  useTicketStore,
+} from "@/lib/ticket-store";
 import {
   agents,
   channelLabel,
@@ -67,17 +72,70 @@ export const Route = createFileRoute("/tickets/$ticketId")({
 
 function TicketPage() {
   const { ticketId } = Route.useParams();
-  const tickets = useTickets();
+  const { tickets, status, error, usingFallback, reloadTickets } = useTicketStore();
   const ticket = tickets.find((t) => String(t.id) === ticketId);
+  const [detailRetryCount, setDetailRetryCount] = useState(0);
+  const [detailRequest, setDetailRequest] = useState<{ key: string; error: string | null } | null>(
+    null,
+  );
+  const detailRequestKey = `${ticketId}:${detailRetryCount}`;
+  const hasDetailRequestResult = detailRequest?.key === detailRequestKey;
+  const detailLoading = !ticket && !hasDetailRequestResult;
+  const detailError = hasDetailRequestResult ? detailRequest.error : null;
+
+  useEffect(() => {
+    let active = true;
+    void loadTicket(ticketId)
+      .then(() => {
+        if (active) setDetailRequest({ key: detailRequestKey, error: null });
+      })
+      .catch((error: unknown) => {
+        if (active) {
+          setDetailRequest({
+            key: detailRequestKey,
+            error: error instanceof Error ? error.message : "Unable to load ticket details.",
+          });
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [ticketId, detailRequestKey]);
+
+  const retryLoad = () => {
+    if (detailError) {
+      setDetailRetryCount((count) => count + 1);
+    } else {
+      void reloadTickets();
+    }
+  };
 
   if (!ticket) {
+    const loadError = detailError ?? error;
+    const loading = !loadError && (detailLoading || status === "idle" || status === "loading");
     return (
-      <AppShell title="Ticket not found">
+      <AppShell title={loading ? "Loading ticket" : loadError ? "Tickets unavailable" : "Ticket not found"}>
         <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
-          <h1 className="text-xl font-semibold">Ticket #{ticketId} doesn't exist</h1>
-          <Button asChild variant="basic">
-            <Link to="/">Back to views</Link>
-          </Button>
+          {loading ? (
+            <p className="text-muted-foreground">Loading ticket…</p>
+          ) : loadError ? (
+            <>
+              <p role="alert" className="text-muted-foreground">
+                {usingFallback ? `Showing sample tickets. ${loadError}` : loadError}
+              </p>
+              <Button variant="basic" onClick={retryLoad}>
+                Retry
+              </Button>
+            </>
+          ) : (
+            <>
+              <h1 className="text-xl font-semibold">Ticket #{ticketId} doesn't exist</h1>
+              <Button asChild variant="basic">
+                <Link to="/">Back to views</Link>
+              </Button>
+            </>
+          )}
         </div>
       </AppShell>
     );
@@ -97,6 +155,23 @@ function TicketPage() {
       }
     >
       <div className="grid h-full grid-cols-1 lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)_340px]">
+        {(detailError || status === "error") && (
+          <div
+            role="alert"
+            className="col-span-full flex items-center justify-between gap-3 border-b bg-destructive/10 px-4 py-2 text-sm"
+          >
+            <span>
+              {detailError
+                ? `Could not load the latest ticket details. Showing cached data. ${detailError}`
+                : usingFallback
+                  ? `Showing sample ticket data. ${error}`
+                  : `Could not refresh tickets. ${error}`}
+            </span>
+            <Button variant="basic" size="sm" onClick={retryLoad}>
+              Retry
+            </Button>
+          </div>
+        )}
         <PropertiesPanel ticket={ticket} />
         <Conversation ticket={ticket} />
         <CustomerPanel ticket={ticket} tickets={tickets} />

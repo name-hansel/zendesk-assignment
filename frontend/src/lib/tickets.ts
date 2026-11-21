@@ -25,7 +25,7 @@ export interface TicketComment {
 }
 
 export interface Ticket {
-  id: number;
+  id: number | string;
   subject: string;
   status: TicketStatus;
   priority: TicketPriority;
@@ -70,6 +70,12 @@ export const groups = ["Support", "Billing", "Shipping"] as const;
 export function getPerson(id: string | null | undefined): Person | undefined {
   if (!id) return undefined;
   return people.find((p) => p.id === id);
+}
+
+export function registerPerson(person: Person): void {
+  const index = people.findIndex((existing) => existing.id === person.id);
+  if (index === -1) people.push(person);
+  else people[index] = person;
 }
 
 let commentSeq = 0;
@@ -379,4 +385,30 @@ const dateFmt = new Intl.DateTimeFormat("en-US", {
 
 export function formatDate(iso: string): string {
   return dateFmt.format(new Date(iso));
+}
+
+export interface NewTicketInput {
+  subject: string;
+  description: string;
+  requesterId: string;
+  assigneeId: string | null;
+  group: string;
+  type: TicketType;
+  priority: TicketPriority;
+  channel: Channel;
+  tags: string[];
+  status: TicketStatus;
+}
+
+export type NewTicketErrors = Partial<Record<"subject" | "description" | "requesterId", string>>;
+
+export function validateNewTicket(
+  input: Pick<NewTicketInput, "subject" | "description" | "requesterId">,
+): NewTicketErrors {
+  const errors: NewTicketErrors = {};
+  if (!input.subject.trim()) errors.subject = "Subject is required";
+  else if (input.subject.trim().length > 150) errors.subject = "Keep the subject under 150 characters";
+  if (!input.description.trim()) errors.description = "Description is required";
+  if (!input.requesterId) errors.requesterId = "Choose a requester";
+  return errors;
 }
