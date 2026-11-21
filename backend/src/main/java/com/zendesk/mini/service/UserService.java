@@ -8,7 +8,6 @@ import com.zendesk.mini.enums.UserRole;
 import com.zendesk.mini.exception.ConflictException;
 import com.zendesk.mini.exception.ResourceNotFoundException;
 import com.zendesk.mini.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,15 +19,22 @@ import java.util.UUID;
 @Transactional
 public class UserService {
 
-    private final UserRepository users;
+    private final UserRepository userRepository;
 
-    public UserService(UserRepository users) {
-        this.users = users;
+    public UserService(UserRepository userRepository) {
+        this.userRepository = userRepository;
     }
 
     @Transactional(readOnly = true)
     public List<UserResponse> findAll() {
-        return users.findAll().stream().map(UserResponse::from).toList();
+        return userRepository.findAll().stream().map(UserResponse::from).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserResponse> findByRole(UserRole role) {
+        return userRepository.findByRole(role).stream()
+                .map(UserResponse::from)
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -37,26 +43,26 @@ public class UserService {
     }
 
     public UserResponse create(UserRequest request) {
-        if (users.existsByEmail(request.email())) {
+        if (userRepository.existsByEmail(request.email())) {
             throw new ConflictException("Email already in use: " + request.email());
         }
         UserEntity entity = new UserEntity();
         apply(entity, request);
-        return UserResponse.from(users.save(entity));
+        return UserResponse.from(userRepository.save(entity));
     }
 
     public UserResponse update(UUID id, UserRequest request) {
         UserEntity entity = load(id);
-        if (users.existsByEmailAndIdNot(request.email(), id)) {
+        if (userRepository.existsByEmailAndIdNot(request.email(), id)) {
             throw new ConflictException("Email already in use: " + request.email());
         }
         apply(entity, request);
-        return UserResponse.from(users.save(entity));
+        return UserResponse.from(userRepository.save(entity));
     }
 
     public void delete(UUID id) {
-        users.delete(load(id));
-        users.flush();
+        userRepository.delete(load(id));
+        userRepository.flush();
     }
 
     public UserEntity createCustomer(CreateUserRequest request) {
@@ -68,11 +74,11 @@ public class UserService {
         user.setRole(UserRole.CUSTOMER);
         user.setCreatedAt(Instant.now());
 
-        return users.save(user);
+        return userRepository.save(user);
     }
 
     private UserEntity load(UUID id) {
-        return users.findById(id).orElseThrow(() -> new ResourceNotFoundException("User", id));
+        return userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User", id));
     }
 
     private void apply(UserEntity entity, UserRequest request) {
